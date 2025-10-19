@@ -30,10 +30,10 @@ jobs:
       ISSUE_NUMBER: ${{ needs.find_exercise.outputs.issue-number }}
 
     steps:
-      - name: Checkout
+      - name: Checkout main repo
         uses: actions/checkout@v4
 
-      - name: Get response templates
+      - name: Checkout exercise toolkit
         uses: actions/checkout@v4
         with:
           repository: skills/exercise-toolkit
@@ -94,7 +94,7 @@ jobs:
                 passed: ${{ steps.check-python-coverage-workflow.outcome == 'success' }}
 
       - name: Fail job if not all checks passed
-        if: contains(steps.*.outcome, 'failure')
+        if: steps.check-python-package-workflow.outcome == 'failure' || steps.check-python-coverage-workflow.outcome == 'failure'
         run: exit 1
 
   post_next_step_content:
@@ -106,10 +106,10 @@ jobs:
       ISSUE_NUMBER: ${{ needs.find_exercise.outputs.issue-number }}
 
     steps:
-      - name: Checkout
+      - name: Checkout main repo
         uses: actions/checkout@v4
 
-      - name: Get response templates
+      - name: Checkout exercise toolkit
         uses: actions/checkout@v4
         with:
           repository: skills/exercise-toolkit
@@ -139,9 +139,13 @@ jobs:
           issue-number: ${{ env.ISSUE_NUMBER }}
           file: exercise-toolkit/markdown-templates/step-feedback/watching-for-progress.md
 
+      - name: Install GitHub CLI
+        run: sudo apt-get update && sudo apt-get install -y gh
+
       - name: Disable current workflow and enable next one
         run: |
-          gh workflow disable "${{github.workflow}}"
+          gh workflow disable "${{ github.workflow }}"
           gh workflow enable "Step 3"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
